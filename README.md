@@ -1,6 +1,6 @@
-# US Market Daily Bot (English)
+# US Market Daily Bot
 
-This repository generates an English-language US market close report, sends a Telegram-friendly short version, and publishes a detailed HTML copy to GitHub Pages.
+This repository generates a US market close report, sends a Telegram-friendly short version, and publishes a detailed HTML copy to GitHub Pages.
 
 ## What it does
 
