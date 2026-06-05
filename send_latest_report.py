@@ -232,15 +232,27 @@ def save_state(path: Path, payload: Dict[str, str]) -> None:
 
 
 def fetch_json(url: str) -> Dict:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:
-        return json.loads(response.read().decode("utf-8"))
+    last_error: Optional[Exception] = None
+    for _ in range(3):
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        try:
+            with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except Exception as exc:
+            last_error = exc
+    raise last_error if last_error is not None else RuntimeError("Unknown fetch_json error")
 
 
 def fetch_text(url: str) -> str:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:
-        return response.read().decode("utf-8")
+    last_error: Optional[Exception] = None
+    for _ in range(3):
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        try:
+            with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:
+                return response.read().decode("utf-8")
+        except Exception as exc:
+            last_error = exc
+    raise last_error if last_error is not None else RuntimeError("Unknown fetch_text error")
 
 
 def fmt_num(value: Optional[float], digits: int = 2) -> str:
@@ -310,7 +322,10 @@ def fetch_many(symbol_map: Dict[str, str]) -> Dict[str, QuoteSnapshot]:
 
 def fetch_fred_latest(series_id: str) -> Tuple[Optional[datetime], Optional[float], Optional[datetime], Optional[float]]:
     url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={0}".format(series_id)
-    rows = fetch_text(url).splitlines()
+    try:
+        rows = fetch_text(url).splitlines()
+    except Exception:
+        return None, None, None, None
     if not rows:
         return None, None, None, None
     header = rows[0].split(",")
